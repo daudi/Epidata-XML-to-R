@@ -1,0 +1,12 @@
+First attempt at some code to read the new epidata XML file format into R.
+
+Epidata: http://www.epidata.dk/
+R: www.r-project.org
+
+I make no claims that this is the best way to do this or that the code is efficient or nice. My approach is as follows:
+
+i) Make it work;
+
+ii) Make it work nicely.
+
+
