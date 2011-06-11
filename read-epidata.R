@@ -32,11 +32,22 @@ epidata.records <- function(datfile) {
   status.log(paste("Found", num.recs, "records"))
   status.log("get the xmlAttrs")
   recs <- xmlApply(epi.records, xmlAttrs)
-  status.log("rbind the records")
+  check.record.structure(recs)
   save(recs, file = "temp-recs.Rda")
+  status.log("rbind the records")
   recs <- as.data.frame(do.call(rbind, recs))
   rownames(recs) <- NULL
   recs
+}
+
+
+check.record.structure <- function(recs) {
+  num.recs <- length(recs)
+  num.flds <- NULL
+  for (i in 1:num.recs) {
+    num.flds <- c(num.flds, length(recs[[i]]))
+  }
+  if (length(unique(num.flds)) > 1) status.log("Warning: Varying number of columns per record")
 }
 
 
@@ -132,7 +143,13 @@ read.epidata.xml <- function(x, dec.sep = NULL) {
 
 ### Now use it.
 x <- read.epidata.xml("test-small.epx", dec.sep = ".")
+x <- read.epidata.xml("test-small-simple.epx", dec.sep = ".")[[1]]
 
-##x <- read.epidata.xml("test.epx", dec.sep = ".")[[1]]
+x <- read.epidata.xml("test.epx", dec.sep = ".")[[1]]
+
+
+## dd <- xmlElementsByTagName(sections, "Field", rec= TRUE)
+## dd <- xmlElementsByTagName(xx, "Field", rec= TRUE)
+
 
 
