@@ -19,21 +19,36 @@
 
 unlink("STATUS.LOG")
 
+
+
 status.log <- function(x) {
-  right.now <- strftime(Sys.time(), format = "%Y-%m-%d %H:%M:%S")
+  ## Purpose: Simple logging mechanism. Can be useful for detecting bottlenecks etc.
+  ## ----------------------------------------------------------------------
+  ## Arguments: a message to be recorded in the log
+  ## ----------------------------------------------------------------------
+  ## Author: David Whiting, Date: 12 Jun 2011, 18:27
+  right.now <- strftime(Sys.time(), format = "%Y-%m-%d %H:%M:%S") 
   cat(paste(right.now, x, "\n"), file = "STATUS.LOG", append = TRUE)
-}
+} 
+
+
+
 
 
 ### Get the records
 epidata.records <- function(datfile) {
+  ## Purpose:
+  ## ----------------------------------------------------------------------
+  ## Arguments:
+  ## ----------------------------------------------------------------------
+  ## Author: David Whiting, Date: 12 Jun 2011, 18:27
   epi.records <- xmlChildren(datfile)[["Records"]]
   num.recs <- xmlSize(epi.records)
   status.log(paste("Found", num.recs, "records"))
   status.log("get the xmlAttrs")
   recs <- xmlApply(epi.records, xmlAttrs)
   check.record.structure(recs)
-  save(recs, file = "temp-recs.Rda")
+  save(recs, file = "temp-recs.Rda") # For debugging
   status.log("rbind the records")
   recs <- as.data.frame(do.call(rbind, recs))
   rownames(recs) <- NULL
@@ -42,6 +57,11 @@ epidata.records <- function(datfile) {
 
 
 check.record.structure <- function(recs) {
+  ## Purpose: See if there are unequal numbers of fields in the rows of data.
+  ## ----------------------------------------------------------------------
+  ## Arguments:
+  ## ----------------------------------------------------------------------
+  ## Author: David Whiting, Date: 12 Jun 2011, 18:27
   num.recs <- length(recs)
   num.flds <- NULL
   for (i in 1:num.recs) {
@@ -52,6 +72,11 @@ check.record.structure <- function(recs) {
 
 
 convert.type <- function(x, fld.type, dec.sep) {
+  ## Purpose:
+  ## ----------------------------------------------------------------------
+  ## Arguments:
+  ## ----------------------------------------------------------------------
+  ## Author: David Whiting, Date: 12 Jun 2011, 18:27
   ## Type conversion
   if (fld.type %in% c(1, 2)) {
     x <- as.numeric(as.character(x))
@@ -75,12 +100,17 @@ convert.type <- function(x, fld.type, dec.sep) {
 
 ### Field/structure info
 epidata.apply.field.structure <- function(sections, dat, dec.sep) {
+  ## Purpose:
+  ## ----------------------------------------------------------------------
+  ## Arguments:
+  ## ----------------------------------------------------------------------
+  ## Author: David Whiting, Date: 12 Jun 2011, 18:27
   num.sections <- xmlSize(xmlChildren(sections))
   dat.orig <- dat
   
   for (si in 1:num.sections) {
     fields <- xmlChildren(xmlChildren(sections)[[si]])[["Fields"]]
-    save(dat, dat.orig, fields, sections, file = "temp.Rda")
+    save(dat, dat.orig, fields, sections, file = "temp.Rda") # For debugging
     num.flds <- xmlSize(fields)
     
     for (i in 1:num.flds) {
@@ -102,6 +132,11 @@ epidata.apply.field.structure <- function(sections, dat, dec.sep) {
 
 
 read.epidata.xml <- function(x, dec.sep = NULL) {
+  ## Purpose:
+  ## ----------------------------------------------------------------------
+  ## Arguments:
+  ## ----------------------------------------------------------------------
+  ## Author: David Whiting, Date: 12 Jun 2011, 18:27
   require(XML)
   status.log(paste("Parsing", x))
   x <- xmlTreeParse(x)
@@ -127,15 +162,12 @@ read.epidata.xml <- function(x, dec.sep = NULL) {
 }
 
 
-## fld.info <- function(sections) {
-##   dd <- xmlElementsByTagName(sections, "Field", rec= TRUE)
- 
-## }
 
 
 
 
-### TODO
+
+### todo
 
 ## It is possible that the records can contain data for different
 ## numbers of fields, e.g. if a field is added after some records have
@@ -150,6 +182,16 @@ x <- read.epidata.xml("test.epx", dec.sep = ".")[[1]]
 
 ## dd <- xmlElementsByTagName(sections, "Field", rec= TRUE)
 ## dd <- xmlElementsByTagName(xx, "Field", rec= TRUE)
+
+
+x <- read.epidata.xml("sample.epx", dec.sep = ".")
+
+
+## Some new ideas about getting records. Focus is on replacing the
+## missing fields.
+recs <- xmlElementsByTagName(xx, "Record", rec= TRUE)
+
+ggg <- as.character(x.info$id)
 
 
 
