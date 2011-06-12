@@ -17,6 +17,12 @@
 ## Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 
+## PLEASE NOTE THAT I AM STILL EXPERIMENTING WITH THIS AND IT MIGHT
+## NOT ALWAYS WORK.
+
+WARNING: THIS IS CURRENTLY BROKEN. 
+
+
 unlink("STATUS.LOG")
 
 
@@ -66,11 +72,11 @@ epidata.records <- function(datfile, flds) {
   num.recs <- xmlSize(epi.records)
   status.log(paste("Found", num.recs, "records"))
   status.log("get the xmlAttrs")
-  ## recs <- xmlApply(epi.records, xmlAttrs)
   recs <- lapply(epi.records, extract.epidata.records, flds)
   save(recs, file = "temp-recs.Rda") # For debugging
   status.log("rbind the records")
   recs <- as.data.frame(do.call(rbind, recs))
+  status.log(paste("Extracted", nrow(recs), "records"))
   rownames(recs) <- NULL
   recs
 }
@@ -175,20 +181,20 @@ fld.info <- function(x) {
   ## Arguments: an xmlRoot() 
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 12 Jun 2011, 18:26
-  dd <- xmlElementsByTagName(x, "Field", rec= TRUE)
+  y <- xmlElementsByTagName(x, "Field", rec= TRUE)
   fld.id <- NULL
   fld.name <- NULL
   fld.type <- NULL
   fld.length <- NULL
   fld.decimals <- NULL
   fld.question <- NULL
-  for (i in 1:xmlSize(dd)) {
-    fld.id <- c(fld.id, xmlAttrs(dd[[i]])[["id"]])
-    fld.name <- c(fld.name, xmlValue(xmlChildren(dd[[i]])[["Name"]]))
-    fld.type <- c(fld.type, xmlValue(xmlChildren(dd[[i]])[["Type"]]))
-    fld.length <- c(fld.length, xmlValue(xmlChildren(dd[[i]])[["Length"]]))
-    fld.decimals <- c(fld.decimals, xmlValue(xmlChildren(dd[[i]])[["Decimals"]]))
-    fld.question <- c(fld.question, xmlValue(xmlChildren(dd[[i]])[["Question"]]))
+  for (i in 1:xmlSize(y)) {
+    fld.id <- c(fld.id, xmlAttrs(y[[i]])[["id"]])
+    fld.name <- c(fld.name, xmlValue(xmlChildren(y[[i]])[["Name"]]))
+    fld.type <- c(fld.type, xmlValue(xmlChildren(y[[i]])[["Type"]]))
+    fld.length <- c(fld.length, xmlValue(xmlChildren(y[[i]])[["Length"]]))
+    fld.decimals <- c(fld.decimals, xmlValue(xmlChildren(y[[i]])[["Decimals"]]))
+    fld.question <- c(fld.question, xmlValue(xmlChildren(y[[i]])[["Question"]]))
   }
   data.frame(id = fld.id,
              name = fld.name,
@@ -220,7 +226,7 @@ fld.info <- function(x) {
 ## dd <- xmlElementsByTagName(sections, "Field", rec= TRUE)
 ## dd <- xmlElementsByTagName(xx, "Field", rec= TRUE)
 
-
+#x <- read.epidata.xml("test.epx", dec.sep = ".")[[1]]
 x <- read.epidata.xml("sample.epx", dec.sep = ".")
 
 
