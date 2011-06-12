@@ -33,6 +33,26 @@ status.log <- function(x) {
 
 
 
+extract.epidata.records <- function(rec, fields) {
+  ## Purpose: Extract records from xml structure, allowing for missing fields.
+  ## ----------------------------------------------------------------------
+  ## Arguments: rec: a single record
+  ## fields: a vector of field names (probably from the info table)
+  ## ----------------------------------------------------------------------
+  ## Author: David Whiting, Date: 12 Jun 2011, 19:59
+  dd <- xmlAttrs(rec)
+  names.of.missing.fields <- fields[!fields %in% names(dd)]
+  if (length(names.of.missing.fields)) {
+    num.missing.flds <- length(names.of.missing.fields)
+    missing.flds <- rep(NA, num.missing.flds)
+    names(missing.flds) <- names.of.missing.fields
+    dd <- c(dd, missing.flds) 
+  }
+  ## Sort the fields so that they are all in the same order.
+  dd <- dd[order(names(dd))]
+  dd
+}
+
 
 
 ### Get the records
@@ -190,6 +210,8 @@ fld.info <- function(x) {
              decimals = fld.decimals,
              question = fld.question)
 }
+
+
 
 
 
