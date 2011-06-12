@@ -20,8 +20,6 @@
 ## PLEASE NOTE THAT I AM STILL EXPERIMENTING WITH THIS AND IT MIGHT
 ## NOT ALWAYS WORK.
 
-WARNING: THIS IS CURRENTLY BROKEN. 
-
 
 unlink("STATUS.LOG")
 
@@ -72,8 +70,8 @@ epidata.records <- function(datfile, flds) {
   num.recs <- xmlSize(epi.records)
   status.log(paste("Found", num.recs, "records"))
   status.log("get the xmlAttrs")
-  recs <- lapply(epi.records, extract.epidata.records, flds)
-  save(recs, file = "temp-recs.Rda") # For debugging
+  recs <- xmlApply(epi.records, extract.epidata.records, flds)
+  save(recs, epi.records, flds, file = "temp-recs.Rda") # For debugging
   status.log("rbind the records")
   recs <- as.data.frame(do.call(rbind, recs))
   status.log(paste("Extracted", nrow(recs), "records"))
@@ -170,6 +168,7 @@ read.epidata.xml <- function(x, dec.sep = NULL) {
     y[i] <- list(dat1)
     names(y)[i] <- datfile.name
   }
+  y[['field.info']] <- x.fld.info
   status.log("Finished.")
   y
 }
@@ -210,11 +209,7 @@ fld.info <- function(x) {
 
 
 
-### todo
-
-## It is possible that the records can contain data for different
-## numbers of fields, e.g. if a field is added after some records have
-## been entered. At the moment this code does not handle that situation properly.
+### TODO
 
 ### Now use it.
 ## x <- read.epidata.xml("test-small.epx", dec.sep = ".")
@@ -226,15 +221,7 @@ fld.info <- function(x) {
 ## dd <- xmlElementsByTagName(sections, "Field", rec= TRUE)
 ## dd <- xmlElementsByTagName(xx, "Field", rec= TRUE)
 
-#x <- read.epidata.xml("test.epx", dec.sep = ".")[[1]]
+# x <- read.epidata.xml("test.epx", dec.sep = ".")[[1]]
 x <- read.epidata.xml("sample.epx", dec.sep = ".")
-
-
-## Some new ideas about getting records. Focus is on replacing the
-## missing fields.
-## recs <- xmlElementsByTagName(xx, "Record", rec= TRUE)
-
-
-
 
 
