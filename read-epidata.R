@@ -67,8 +67,7 @@ epidata.records <- function(datfile, flds) {
   status.log(paste("Found", num.recs, "records"))
   status.log("get the xmlAttrs")
   ## recs <- xmlApply(epi.records, xmlAttrs)
-  recs <- lapply(recs, extract.epidata.records, flds)
-  check.record.structure(recs)
+  recs <- lapply(epi.records, extract.epidata.records, flds)
   save(recs, file = "temp-recs.Rda") # For debugging
   status.log("rbind the records")
   recs <- as.data.frame(do.call(rbind, recs))
