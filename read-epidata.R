@@ -76,20 +76,6 @@ epidata.records <- function(datfile, flds) {
 }
 
 
-check.record.structure <- function(recs) {
-  ## Purpose: See if there are unequal numbers of fields in the rows of data.
-  ## ----------------------------------------------------------------------
-  ## Arguments:
-  ## ----------------------------------------------------------------------
-  ## Author: David Whiting, Date: 12 Jun 2011, 18:27
-  num.recs <- length(recs)
-  num.flds <- NULL
-  for (i in 1:num.recs) {
-    num.flds <- c(num.flds, length(recs[[i]]))
-  }
-  if (length(unique(num.flds)) > 1) status.log("Warning: Varying number of columns per record")
-}
-
 
 convert.type <- function(x, fld.type, dec.sep) {
   ## Purpose:
