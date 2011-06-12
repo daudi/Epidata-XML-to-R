@@ -56,7 +56,7 @@ extract.epidata.records <- function(rec, fields) {
 
 
 ### Get the records
-epidata.records <- function(datfile) {
+epidata.records <- function(datfile, flds) {
   ## Purpose:
   ## ----------------------------------------------------------------------
   ## Arguments:
@@ -66,7 +66,8 @@ epidata.records <- function(datfile) {
   num.recs <- xmlSize(epi.records)
   status.log(paste("Found", num.recs, "records"))
   status.log("get the xmlAttrs")
-  recs <- xmlApply(epi.records, xmlAttrs)
+  ## recs <- xmlApply(epi.records, xmlAttrs)
+  recs <- lapply(recs, extract.epidata.records, flds)
   check.record.structure(recs)
   save(recs, file = "temp-recs.Rda") # For debugging
   status.log("rbind the records")
@@ -161,7 +162,8 @@ read.epidata.xml <- function(x, dec.sep = NULL) {
   status.log(paste("Parsing", x))
   x <- xmlTreeParse(x)
   epidata <- xmlRoot(x)
-
+  x.fld.info <- fld.info(epidata)
+  
   y <- list()
   ## Get the data files
   num.datafiles <- xmlSize(xmlChildren(epidata)["DataFiles"])
@@ -171,7 +173,7 @@ read.epidata.xml <- function(x, dec.sep = NULL) {
     sections <- xmlChildren(datfile)[["Sections"]]
     
     status.log("Get the records")
-    dat1 <- epidata.records(datfile)
+    dat1 <- epidata.records(datfile, x.fld.info$id)
     status.log("Apply field structure")
     dat1 <- epidata.apply.field.structure(sections, dat1, dec.sep)
     y[i] <- list(dat1)
@@ -224,10 +226,10 @@ fld.info <- function(x) {
 ## been entered. At the moment this code does not handle that situation properly.
 
 ### Now use it.
-x <- read.epidata.xml("test-small.epx", dec.sep = ".")
-x <- read.epidata.xml("test-small-simple.epx", dec.sep = ".")[[1]]
+## x <- read.epidata.xml("test-small.epx", dec.sep = ".")
+## x <- read.epidata.xml("test-small-simple.epx", dec.sep = ".")[[1]]
 
-x <- read.epidata.xml("test.epx", dec.sep = ".")[[1]]
+## x <- read.epidata.xml("test.epx", dec.sep = ".")[[1]]
 
 
 ## dd <- xmlElementsByTagName(sections, "Field", rec= TRUE)
@@ -239,9 +241,9 @@ x <- read.epidata.xml("sample.epx", dec.sep = ".")
 
 ## Some new ideas about getting records. Focus is on replacing the
 ## missing fields.
-recs <- xmlElementsByTagName(xx, "Record", rec= TRUE)
+## recs <- xmlElementsByTagName(xx, "Record", rec= TRUE)
 
-ggg <- as.character(x.info$id)
+
 
 
 
