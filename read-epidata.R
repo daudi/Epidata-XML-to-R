@@ -162,6 +162,34 @@ read.epidata.xml <- function(x, dec.sep = NULL) {
 }
 
 
+fld.info <- function(x) {
+  ## Purpose: Create a table of info about the fields
+  ## ----------------------------------------------------------------------
+  ## Arguments: an xmlRoot() 
+  ## ----------------------------------------------------------------------
+  ## Author: David Whiting, Date: 12 Jun 2011, 18:26
+  dd <- xmlElementsByTagName(x, "Field", rec= TRUE)
+  fld.id <- NULL
+  fld.name <- NULL
+  fld.type <- NULL
+  fld.length <- NULL
+  fld.decimals <- NULL
+  fld.question <- NULL
+  for (i in 1:xmlSize(dd)) {
+    fld.id <- c(fld.id, xmlAttrs(dd[[i]])[["id"]])
+    fld.name <- c(fld.name, xmlValue(xmlChildren(dd[[i]])[["Name"]]))
+    fld.type <- c(fld.type, xmlValue(xmlChildren(dd[[i]])[["Type"]]))
+    fld.length <- c(fld.length, xmlValue(xmlChildren(dd[[i]])[["Length"]]))
+    fld.decimals <- c(fld.decimals, xmlValue(xmlChildren(dd[[i]])[["Decimals"]]))
+    fld.question <- c(fld.question, xmlValue(xmlChildren(dd[[i]])[["Question"]]))
+  }
+  data.frame(id = fld.id,
+             name = fld.name,
+             type = fld.type,
+             length = fld.length,
+             decimals = fld.decimals,
+             question = fld.question)
+}
 
 
 
