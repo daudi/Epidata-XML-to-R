@@ -178,7 +178,7 @@ read.epidata.xml <- function(x, dec.sep = NULL) {
 fld.info <- function(x) {
   ## Purpose: Create a table of info about the fields
   ## ----------------------------------------------------------------------
-  ## Arguments: an xmlRoot() 
+  ## Arguments: x: an xmlRoot() 
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 12 Jun 2011, 18:26
   y <- xmlElementsByTagName(x, "Field", rec = TRUE)
@@ -188,6 +188,7 @@ fld.info <- function(x) {
   fld.length <- NULL
   fld.decimals <- NULL
   fld.question <- NULL
+  fld.valuelabel <- NULL
   for (i in 1:xmlSize(y)) {
     fld.id <- c(fld.id, xmlAttrs(y[[i]])[["id"]])
     fld.name <- c(fld.name, xmlValue(xmlChildren(y[[i]])[["Name"]]))
@@ -195,37 +196,19 @@ fld.info <- function(x) {
     fld.length <- c(fld.length, xmlValue(xmlChildren(y[[i]])[["Length"]]))
     fld.decimals <- c(fld.decimals, xmlValue(xmlChildren(y[[i]])[["Decimals"]]))
     fld.question <- c(fld.question, xmlValue(xmlChildren(y[[i]])[["Question"]]))
+    fld.valuelabel <- c(fld.valuelabel, xmlValue(xmlChildren(y[[i]])[["ValueLabelId"]]))
   }
   data.frame(id = fld.id,
              name = fld.name,
              type = fld.type,
              length = fld.length,
              decimals = fld.decimals,
-             question = fld.question)
+             question = fld.question,
+             value.labelset = fld.valuelabel)
 }
 
 
 
-
-
-
-
-### TODO
-
-### Now use it.
-## x <- read.epidata.xml("test-small.epx", dec.sep = ".")
-## x <- read.epidata.xml("test-small-simple.epx", dec.sep = ".")[[1]]
-
-## x <- read.epidata.xml("test.epx", dec.sep = ".")[[1]]
-
-
-## dd <- xmlElementsByTagName(sections, "Field", rec= TRUE)
-## dd <- xmlElementsByTagName(xx, "Field", rec= TRUE)
-
-## LABELS. Nearly there.
-
-x <- xmlTreeParse("sample.epx")
-x <- xmlRoot(x)
 
 epidata.value.labels <- function(x) {
   ## Purpose: Create a list of epidata labels
@@ -233,6 +216,9 @@ epidata.value.labels <- function(x) {
   ## Arguments: x: an xmlRoot
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 14 Jun 2011, 20:26
+  ## ----------------------------------------------------------------------
+  ## TODO: NEED TO GET the ID i.e.  <ValueLabelSet id="valuelabelset_id_0">
+  ## to link to the field info.
   y <- xmlElementsByTagName(x, "ValueLabelSet", rec = TRUE)
   i <- 1
   value.labels <- list()
@@ -280,15 +266,30 @@ is.epidata.na <- function(x, value.labels, label.set) {
 }
 
 
+epidata.value.label <- function(x, value.labels, label.set) {
+  ## Purpose: Return the value label for a given value
+  ## ----------------------------------------------------------------------
+  ## Arguments: x: a value
+  ## value.labels: a list of value labels created by epidata.value.labels()
+  ## label.set: the name of a set of labels.
+  ## ----------------------------------------------------------------------
+  ## Returns: the value label for a given value
+  ## ----------------------------------------------------------------------
+  ## Author: David Whiting, Date: 14 Jun 2011, 20:26
+  i <- value.labels[[label.set]]$labels$value == x
+  value.labels[[label.set]]$labels$label[i]
+}
 
 
 
+
+### USE IT
 
 
 ## x <- read.epidata.xml("test.epx", dec.sep = ".")[[1]]
 x <- read.epidata.xml("sample.epx", dec.sep = ".")
 names(x)
 
-
+epidata.value.label("AAA", x$labels, "String Set")
 
 
