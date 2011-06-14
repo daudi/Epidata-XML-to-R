@@ -169,6 +169,7 @@ read.epidata.xml <- function(x, dec.sep = NULL) {
     names(y)[i] <- datfile.name
   }
   y[['field.info']] <- x.fld.info
+  y[['labels']] <- epidata.value.labels(epidata)
   status.log("Finished.")
   y
 }
@@ -180,7 +181,7 @@ fld.info <- function(x) {
   ## Arguments: an xmlRoot() 
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 12 Jun 2011, 18:26
-  y <- xmlElementsByTagName(x, "Field", rec= TRUE)
+  y <- xmlElementsByTagName(x, "Field", rec = TRUE)
   fld.id <- NULL
   fld.name <- NULL
   fld.type <- NULL
@@ -221,7 +222,73 @@ fld.info <- function(x) {
 ## dd <- xmlElementsByTagName(sections, "Field", rec= TRUE)
 ## dd <- xmlElementsByTagName(xx, "Field", rec= TRUE)
 
-# x <- read.epidata.xml("test.epx", dec.sep = ".")[[1]]
+## LABELS. Nearly there.
+
+x <- xmlTreeParse("sample.epx")
+x <- xmlRoot(x)
+
+epidata.value.labels <- function(x) {
+  ## Purpose: Create a list of epidata labels
+  ## ----------------------------------------------------------------------
+  ## Arguments: x: an xmlRoot
+  ## ----------------------------------------------------------------------
+  ## Author: David Whiting, Date: 14 Jun 2011, 20:26
+  y <- xmlElementsByTagName(x, "ValueLabelSet", rec = TRUE)
+  i <- 1
+  value.labels <- list()
+  for (i in 1:xmlSize(y)) {
+    this.valueset <- y[[i]]
+    valueset.name <- xmlValue(this.valueset[["Name"]])
+    valueset.type <- xmlValue(this.valueset[["Type"]])
+    j <- 1
+    this.value <- NULL
+    this.order <- NULL
+    this.label <- NULL
+    this.missing <- NULL
+    for (j in 1:xmlSize(this.valueset[['Internal']])) {
+      this.value <- c(this.value, xmlAttrs(this.valueset[["Internal"]][[j]])[["value"]])
+      this.order <-   c(this.order,   xmlAttrs(this.valueset[["Internal"]][[j]])[["order"]])
+      ## Find out if missing exists
+      if ("missing" %in% names(xmlAttrs(this.valueset[["Internal"]][[j]]))) {
+        ## Convert this to a logical variable.
+        this.missing <- c(this.missing, xmlAttrs(this.valueset[["Internal"]][[j]])[["missing"]] == "true")
+      } else {
+        this.missing <- c(this.missing, FALSE)
+      }
+      this.label <- c(this.label, xmlValue(this.valueset[["Internal"]][[j]][["Label"]]))
+    }
+    these.labels <- data.frame(value = this.value, order = this.order, label = this.label, missing = this.missing)
+    these.labels <- list(type = valueset.type, labels = these.labels)
+    value.labels[valueset.name] <- list(these.labels)
+  }
+  value.labels
+}
+
+
+is.epidata.na <- function(x, value.labels, label.set) {
+  ## Purpose: Determine if a value is missing or not
+  ## ----------------------------------------------------------------------
+  ## Arguments: x: a value
+  ## value.labels: a list of value labels created by epidata.value.labels()
+  ## label.set: the name of a set of labels.
+  ## ----------------------------------------------------------------------
+  ## Returns: TRUE/FALSE
+  ## ----------------------------------------------------------------------
+  ## Author: David Whiting, Date: 14 Jun 2011, 20:26
+  i <- value.labels[[label.set]]$labels$value == x
+  value.labels[[label.set]]$labels$missing[i]
+}
+
+
+
+
+
+
+
+## x <- read.epidata.xml("test.epx", dec.sep = ".")[[1]]
 x <- read.epidata.xml("sample.epx", dec.sep = ".")
+names(x)
+
+
 
 
