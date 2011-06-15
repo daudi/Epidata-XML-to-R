@@ -307,6 +307,34 @@ epidata.value.label <- function(x, value.labels, label.set) {
 
 
 
+use.epidata.labels <- function(x, set.missing.na = TRUE) {
+  ## Purpose: Recode the data using the epidata value labels
+  ## ----------------------------------------------------------------------
+  ## Arguments: x: 
+  ## ----------------------------------------------------------------------
+  ## Author: David Whiting, Date: 14 Jun 2011, 20:26
+  ## ----------------------------------------------------------------------
+  for (i in 1:nrow(x$field.info)) {
+    if (!is.na(x$field.info$value.labelset)[i]) {
+      this.labelset <- x$field.info$value.labelset[i]
+      this.field <- x$field.info$name[i]
+      ## This is a bit clumsy, but I had to break it down to get my head
+      ## around it.
+      j <- which(names(x$datafile_id_0) == this.field)
+      dd <- x[[1]][, j]
+      ## Mark the missing values first
+      if (set.missing.na) dd[is.epidata.na(dd, x$labels, this.labelset)] <- NA
+
+      ## Relabel the values.
+      dd <- epidata.value.label(dd, x$labels, this.labelset)
+      x[[1]][, j] <- dd
+    }
+  }
+  x
+}
+
+
+
 
 ### USE IT
 
