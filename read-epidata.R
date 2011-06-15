@@ -257,30 +257,39 @@ epidata.value.labels <- function(x) {
 is.epidata.na <- function(x, value.labels, label.set) {
   ## Purpose: Determine if a value is missing or not
   ## ----------------------------------------------------------------------
-  ## Arguments: x: a value
+  ## Arguments: x: a vector of values
   ## value.labels: a list of value labels created by epidata.value.labels()
   ## label.set: the name of a set of labels.
   ## ----------------------------------------------------------------------
-  ## Returns: TRUE/FALSE
+  ## Returns: a logical vector (TRUE/FALSE)
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 14 Jun 2011, 20:26
-  i <- value.labels[[label.set]]$labels$value == x
-  value.labels[[label.set]]$labels$missing[i]
+
+  retval <- NULL
+  for (j in 1:length(x)) {
+    i <- value.labels[[label.set]]$labels$value == x[j]
+    retval <- c(retval, value.labels[[label.set]]$labels$missing[i])
+  }
+  retval
 }
 
 
 epidata.value.label <- function(x, value.labels, label.set) {
   ## Purpose: Return the value label for a given value
   ## ----------------------------------------------------------------------
-  ## Arguments: x: a value
+  ## Arguments: x: a vector of values
   ## value.labels: a list of value labels created by epidata.value.labels()
   ## label.set: the name of a set of labels.
   ## ----------------------------------------------------------------------
-  ## Returns: the value label for a given value
+  ## Returns: a factor vector of value labels for a given values
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 14 Jun 2011, 20:26
-  i <- value.labels[[label.set]]$labels$value == x
-  value.labels[[label.set]]$labels$label[i]
+  retval <- NULL
+  for (j in 1:length(x)) {
+    i <- value.labels[[label.set]]$labels$value == x[j]
+    retval <- c(retval, as.character(value.labels[[label.set]]$labels$label[i]))
+  }
+  as.factor(retval)
 }
 
 
