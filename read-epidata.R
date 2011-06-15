@@ -357,19 +357,3 @@ use.epidata.labels <- function(x, set.missing.na = TRUE) {
 
 
 
-### EXAMPLES
-
-
-## Read in an epidata file, using the epidata labels and missing
-## values (the default).
-x <- read.epidata.xml("sample.epx")
-
-
-## Read in an epidata file, but do not use the epidata labels.
-x <- read.epidata.xml("sample.epx", use.epidata.labels = FALSE)
-
-
-## Read in an epidata file, use the epidata labels, but do not convert
-## the missing values to R NA values.
-x <- read.epidata.xml("sample.epx", set.missing.na = FALSE)
-
