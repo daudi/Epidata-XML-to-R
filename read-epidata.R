@@ -93,9 +93,9 @@ convert.type <- function(x, fld.type, dec.sep) {
   } else if (fld.type %in% c(12, 13)){
     ## Characters, do nothing
   } else if (fld.type == 3){
-    ## Work around comma decimal point issue.
+    ## Decimal separator hack. It should convert to whatever R is using.
     if (!is.null(dec.sep)) {
-      levels(x) <- gsub("[,.]", dec.sep, levels(x))
+      levels(x) <- gsub("[,.]", Sys.localeconv()[['decimal_point']], levels(x))
     }
     x <- as.numeric(as.character(x))
   } else if (fld.type == 4){
