@@ -345,3 +345,5 @@ x <- read.epidata.xml("sample.epx", dec.sep = ".")
 
 ## epidata.value.label("AAA", x$labels, "String Set")
 
+
+x <- use.epidata.labels(x, set.missing.na = FALSE)
