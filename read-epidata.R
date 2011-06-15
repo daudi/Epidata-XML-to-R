@@ -224,6 +224,7 @@ epidata.value.labels <- function(x) {
   value.labels <- list()
   for (i in 1:xmlSize(y)) {
     this.valueset <- y[[i]]
+    valueset.id <- xmlAttrs(this.valueset)[["id"]]
     valueset.name <- xmlValue(this.valueset[["Name"]])
     valueset.type <- xmlValue(this.valueset[["Type"]])
     j <- 1
@@ -244,8 +245,10 @@ epidata.value.labels <- function(x) {
       this.label <- c(this.label, xmlValue(this.valueset[["Internal"]][[j]][["Label"]]))
     }
     these.labels <- data.frame(value = this.value, order = this.order, label = this.label, missing = this.missing)
-    these.labels <- list(type = valueset.type, labels = these.labels)
-    value.labels[valueset.name] <- list(these.labels)
+    these.labels <- list(name = valueset.name,
+                         type = valueset.type,
+                         labels = these.labels)
+    value.labels[valueset.id] <- list(these.labels)
   }
   value.labels
 }
@@ -288,8 +291,7 @@ epidata.value.label <- function(x, value.labels, label.set) {
 
 ## x <- read.epidata.xml("test.epx", dec.sep = ".")[[1]]
 x <- read.epidata.xml("sample.epx", dec.sep = ".")
-names(x)
+## names(x)
 
-epidata.value.label("AAA", x$labels, "String Set")
-
+## epidata.value.label("AAA", x$labels, "String Set")
 
