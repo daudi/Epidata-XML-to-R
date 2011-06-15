@@ -169,7 +169,7 @@ read.epidata.xml <- function(x, dec.sep = NULL) {
     names(y)[i] <- datfile.name
   }
   y[['field.info']] <- x.fld.info
-  y[['labels']] <- epidata.value.labels(epidata)
+  y[['labels']] <- get.epidata.value.labels(epidata)
   status.log("Finished.")
   y
 }
@@ -210,7 +210,7 @@ fld.info <- function(x) {
 
 
 
-epidata.value.labels <- function(x) {
+get.epidata.value.labels <- function(x) {
   ## Purpose: Create a list of epidata labels
   ## ----------------------------------------------------------------------
   ## Arguments: x: an xmlRoot
@@ -258,7 +258,7 @@ is.epidata.na <- function(x, value.labels, label.set) {
   ## Purpose: Determine if a value is missing or not
   ## ----------------------------------------------------------------------
   ## Arguments: x: a vector of values
-  ## value.labels: a list of value labels created by epidata.value.labels()
+  ## value.labels: a list of value labels created by get.epidata.value.labels()
   ## label.set: the name of a set of labels.
   ## ----------------------------------------------------------------------
   ## Returns: a logical vector (TRUE/FALSE)
@@ -278,7 +278,7 @@ epidata.value.label <- function(x, value.labels, label.set) {
   ## Purpose: Return the value label for a given value
   ## ----------------------------------------------------------------------
   ## Arguments: x: a vector of values
-  ## value.labels: a list of value labels created by epidata.value.labels()
+  ## value.labels: a list of value labels created by get.epidata.value.labels()
   ## label.set: the name of a set of labels.
   ## ----------------------------------------------------------------------
   ## Returns: a factor vector of value labels for a given values
