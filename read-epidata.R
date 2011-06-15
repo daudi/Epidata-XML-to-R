@@ -267,11 +267,18 @@ is.epidata.na <- function(x, value.labels, label.set) {
 
   retval <- NULL
   for (j in 1:length(x)) {
-    i <- value.labels[[label.set]]$labels$value == x[j]
-    retval <- c(retval, value.labels[[label.set]]$labels$missing[i])
+    if (is.na(x[j])) {
+      this.val <- NA
+    } else {
+      i <- value.labels[[label.set]]$labels$value == x[j]
+      this.val <- value.labels[[label.set]]$labels$missing[i]
+    }
+    retval <- c(retval, this.val)
   }
   retval
 }
+
+
 
 
 epidata.value.label <- function(x, value.labels, label.set) {
