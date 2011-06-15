@@ -242,6 +242,8 @@ get.epidata.value.labels <- function(x) {
       }
       this.label <- c(this.label, xmlValue(this.valueset[["Internal"]][[j]][["Label"]]))
     }
+    ## Convert the value to the right data type
+    this.value <- convert.type(factor(this.value), valueset.type, ".")
     these.labels <- data.frame(value = this.value, order = this.order, label = this.label, missing = this.missing)
     these.labels <- list(name = valueset.name,
                          type = valueset.type,
