@@ -217,8 +217,6 @@ get.epidata.value.labels <- function(x) {
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 14 Jun 2011, 20:26
   ## ----------------------------------------------------------------------
-  ## TODO: NEED TO GET the ID i.e.  <ValueLabelSet id="valuelabelset_id_0">
-  ## to link to the field info.
   y <- xmlElementsByTagName(x, "ValueLabelSet", rec = TRUE)
   i <- 1
   value.labels <- list()
