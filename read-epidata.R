@@ -81,7 +81,7 @@ epidata.records <- function(datfile, flds) {
 
 
 
-convert.type <- function(x, fld.type, dec.sep) {
+convert.type <- function(x, fld.type) {
   ## Purpose:
   ## ----------------------------------------------------------------------
   ## Arguments:
@@ -94,9 +94,8 @@ convert.type <- function(x, fld.type, dec.sep) {
     ## Characters, do nothing
   } else if (fld.type == 3){
     ## Decimal separator hack. It should convert to whatever R is using.
-    if (!is.null(dec.sep)) {
-      levels(x) <- gsub("[,.]", Sys.localeconv()[['decimal_point']], levels(x))
-    }
+    levels(x) <- gsub("[,.]", Sys.localeconv()[['decimal_point']], levels(x))
+
     x <- as.numeric(as.character(x))
   } else if (fld.type == 4){
     ## 16/05/1968 (DD/MM/YYYY, i.e. 16th of May, 1968)
@@ -109,7 +108,7 @@ convert.type <- function(x, fld.type, dec.sep) {
 
 
 ### Field/structure info
-epidata.apply.field.structure <- function(sections, dat, dec.sep) {
+epidata.apply.field.structure <- function(sections, dat) {
   ## Purpose:
   ## ----------------------------------------------------------------------
   ## Arguments:
@@ -131,7 +130,7 @@ epidata.apply.field.structure <- function(sections, dat, dec.sep) {
       
       fld <- which(names(dat) == fld.id)
       names(dat)[fld] <- fld.name
-      dat[, fld] <- convert.type(dat[, fld], fld.type, dec.sep)
+      dat[, fld] <- convert.type(dat[, fld], fld.type)
     }
   }
   dat
@@ -141,7 +140,7 @@ epidata.apply.field.structure <- function(sections, dat, dec.sep) {
 
 
 
-read.epidata.xml <- function(x, dec.sep = NULL,
+read.epidata.xml <- function(x, 
                              use.epidata.labels = TRUE,
                              set.missing.na = TRUE) {
   ## Purpose:
@@ -166,7 +165,7 @@ read.epidata.xml <- function(x, dec.sep = NULL,
     status.log("Get the records")
     dat1 <- epidata.records(datfile, x.fld.info$id)
     status.log("Apply field structure")
-    dat1 <- epidata.apply.field.structure(sections, dat1, dec.sep)
+    dat1 <- epidata.apply.field.structure(sections, dat1)
     y[i] <- list(dat1)
     names(y)[i] <- datfile.name
   }
@@ -265,7 +264,7 @@ get.epidata.value.labels <- function(x) {
       this.label <- c(this.label, xmlValue(this.valueset[["Internal"]][[j]][["Label"]]))
     }
     ## Convert the value to the right data type
-    this.value <- convert.type(factor(this.value), valueset.type, ".")
+    this.value <- convert.type(factor(this.value), valueset.type)
     these.labels <- data.frame(value = this.value, order = this.order, label = this.label, missing = this.missing)
     these.labels <- list(name = valueset.name,
                          type = valueset.type,
@@ -363,14 +362,14 @@ use.epidata.labels <- function(x, set.missing.na = TRUE) {
 
 ## Read in an epidata file, using the epidata labels and missing
 ## values (the default).
-x <- read.epidata.xml("sample.epx", dec.sep = ".")
+x <- read.epidata.xml("sample.epx")
 
 
 ## Read in an epidata file, but do not use the epidata labels.
-x <- read.epidata.xml("sample.epx", dec.sep = ".", use.epidata.labels = FALSE)
+x <- read.epidata.xml("sample.epx", use.epidata.labels = FALSE)
 
 
 ## Read in an epidata file, use the epidata labels, but do not convert
 ## the missing values to R NA values.
-x <- read.epidata.xml("sample.epx", dec.sep = ".", set.missing.na = FALSE)
+x <- read.epidata.xml("sample.epx", set.missing.na = FALSE)
 
