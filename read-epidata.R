@@ -292,9 +292,15 @@ epidata.value.label <- function(x, value.labels, label.set) {
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 14 Jun 2011, 20:26
   retval <- NULL
+  ##  x <- as.character(x)
   for (j in 1:length(x)) {
-    i <- value.labels[[label.set]]$labels$value == x[j]
-    retval <- c(retval, as.character(value.labels[[label.set]]$labels$label[i]))
+    if (is.na(x[j])) {
+      this.val <- NA
+    } else {
+      i <- value.labels[[label.set]]$labels$value == x[j]
+      this.val <- as.character(value.labels[[label.set]]$labels$label[i])
+    }
+    retval <- c(retval, this.val)
   }
   as.factor(retval)
 }
