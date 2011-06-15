@@ -141,7 +141,9 @@ epidata.apply.field.structure <- function(sections, dat, dec.sep) {
 
 
 
-read.epidata.xml <- function(x, dec.sep = NULL) {
+read.epidata.xml <- function(x, dec.sep = NULL,
+                             use.epidata.labels = TRUE,
+                             set.missing.na = TRUE) {
   ## Purpose:
   ## ----------------------------------------------------------------------
   ## Arguments:
@@ -170,6 +172,10 @@ read.epidata.xml <- function(x, dec.sep = NULL) {
   }
   y[['field.info']] <- x.fld.info
   y[['labels']] <- get.epidata.value.labels(epidata)
+  if (use.epidata.labels) {
+    status.log("Use epidata labels")
+    y <- use.epidata.labels(y, set.missing.na)
+  }
   status.log("Finished.")
   y
 }
@@ -336,14 +342,19 @@ use.epidata.labels <- function(x, set.missing.na = TRUE) {
 
 
 
-### USE IT
+### EXAMPLES
 
 
-## x <- read.epidata.xml("test.epx", dec.sep = ".")[[1]]
+## Read in an epidata file, using the epidata labels and missing
+## values (the default).
 x <- read.epidata.xml("sample.epx", dec.sep = ".")
-## names(x)
-
-## epidata.value.label("AAA", x$labels, "String Set")
 
 
-x <- use.epidata.labels(x, set.missing.na = FALSE)
+## Read in an epidata file, but do not use the epidata labels.
+x <- read.epidata.xml("sample.epx", dec.sep = ".", use.epidata.labels = FALSE)
+
+
+## Read in an epidata file, use the epidata labels, but do not convert
+## the missing values to R NA values.
+x <- read.epidata.xml("sample.epx", dec.sep = ".", set.missing.na = FALSE)
+
