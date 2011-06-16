@@ -174,8 +174,8 @@ read.epidata.xml <- function(x,
     dat1 <- epidata.records(datfile, x.fld.info$id)
     status.log("Apply field structure")
     dat1 <- epidata.apply.field.structure(sections, dat1)
-    y[i] <- list(dat1)
-    names(y)[i] <- datfile.name
+    y$data[i] <- list(dat1)
+    names(y$data)[i] <- datfile.name
   }
   y[['field.info']] <- x.fld.info
   y[['labels']] <- get.epidata.value.labels(epidata)
@@ -339,7 +339,7 @@ epidata.value.label <- function(x, value.labels, label.set) {
 use.epidata.labels <- function(x, set.missing.na = TRUE) {
   ## Purpose: Recode the data using the epidata value labels
   ## ----------------------------------------------------------------------
-  ## Arguments: x: 
+  ## Arguments: x: an imported object with data and field info
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 14 Jun 2011, 20:26
   ## ----------------------------------------------------------------------
@@ -349,14 +349,14 @@ use.epidata.labels <- function(x, set.missing.na = TRUE) {
       this.field <- x$field.info$name[i]
       ## This is a bit clumsy, but I had to break it down to get my head
       ## around it.
-      j <- which(names(x$datafile_id_0) == this.field)
-      dd <- x[[1]][, j]
+      j <- which(names(x$data[[1]]) == this.field)
+      dd <- x$data[[1]][, j]
       ## Mark the missing values first
       if (set.missing.na) dd[is.epidata.na(dd, x$labels, this.labelset)] <- NA
 
       ## Relabel the values.
       dd <- epidata.value.label(dd, x$labels, this.labelset)
-      x[[1]][, j] <- dd
+      x$data[[1]][, j] <- dd
     }
   }
   x
