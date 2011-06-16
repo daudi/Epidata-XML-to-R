@@ -2,8 +2,11 @@
 
 ### NOTE: read.epidata.xml() reads in the epidata XML file and creates
 ### a list that has both the data and metadata. Use names(x) to look
-### at what x contains. The data are in the first
-### element of the list, i.e. x$data. file_id_0 or x[[1]]
+### at what x contains. The data are in the first element of the list,
+### i.e. x$data. At the moment I think the epidata format only has one
+### data file per XML file. When imported this takes the name of the
+### ID in epidata, and currently this is x$data$datafile_id_0 and can
+### also be accessed as x$data[[1]]
 
 source("read-epidata.R")
 
@@ -26,4 +29,4 @@ x <- read.epidata.xml("sample.epx", set.missing.na = FALSE)
 ## labels.
 x <- read.epidata.xml("sample.epx", use.epidata.labels = FALSE)
 ## Now use the epidata labels for just one field
-x$datafile_id_0$VL1 <- epidata.value.label(x$datafile_id_0$VL1, x$labels, "valuelabelset_id_0")
+x$data$datafile_id_0$VL1 <- epidata.value.label(x$data$datafile_id_0$VL1, x$labels, "valuelabelset_id_0")
