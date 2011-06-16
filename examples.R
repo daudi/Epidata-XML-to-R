@@ -2,8 +2,8 @@
 
 ### NOTE: read.epidata.xml() reads in the epidata XML file and creates
 ### a list that has both the data and metadata. Use names(x) to look
-### at what x contains. At the moment the data are in the first
-### element of the list, i.e. x$datafile_id_0 or x[[1]]
+### at what x contains. The data are in the first
+### element of the list, i.e. x$data. file_id_0 or x[[1]]
 
 source("read-epidata.R")
 
