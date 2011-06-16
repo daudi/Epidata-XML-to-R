@@ -96,20 +96,18 @@ convert.type <- function(x, fld.type) {
     ## Decimal separator hack. It should convert to whatever R is using.
     levels(x) <- gsub("[,.]", Sys.localeconv()[['decimal_point']], levels(x))
     x <- as.numeric(as.character(x))
-  } else if (fld.type %in% c(4,7) ){
+  } else if (fld.type %in% c(4, 7) ){
     ## 16/05/1968 (DD/MM/YYYY, i.e. 16th of May, 1968)
     x <- as.Date(x, "%d/%m/%Y")
-  } else if (fld.type %in% c(5,8) ){
+  } else if (fld.type %in% c(5, 8) ){
     ## 16/05/1968 (MM/DD/YYYY, i.e. May 16th, 1968)
     x <- as.Date(x, "%m/%d/%Y")
-  } else if (fld.type %in% c(6,9) ){
+  } else if (fld.type %in% c(6, 9) ){
     ## 16/05/1968 (YYYY/MM/DD, i.e. 1968, May 16th)
     x <- as.Date(x, "%Y/%m/%d")
-  ## } else if (fld.type %in% c(10,11) ){
-  ##   ## Time field. At the moment it sets the date part to the current date.
-    ## ## There is a problem with "provided 9 variables to replace 1 variables"
-    ## ## This only happens when trying to use indexing 
-  ##   x <- strptime(x, "%H.%M.%S")
+  } else if (fld.type %in% c(10, 11) ){
+    ## Time fields. At the moment it sets the date part to the current date.
+    x <- as.POSIXct(strptime(x, "%H.%M.%S"))
   } else {
     status.log(paste("Field type not handled:", fld.type))
   }
