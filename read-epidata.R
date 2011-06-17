@@ -251,6 +251,7 @@ get.epidata.value.labels <- function(x) {
   ## Author: David Whiting, Date: 14 Jun 2011, 20:26
   ## ----------------------------------------------------------------------
   y <- xmlElementsByTagName(x, "ValueLabelSet", rec = TRUE)
+  if (xmlSize(y) == 0) return(NULL)
   i <- 1
   value.labels <- list()
   for (i in 1:xmlSize(y)) {
