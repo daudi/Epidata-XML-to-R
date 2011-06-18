@@ -177,9 +177,14 @@ read.epidata.xml <- function(x,
     y$data[i] <- list(dat1)
     names(y$data)[i] <- datfile.name
   }
+  
   y[['field.info']] <- x.fld.info
   y[['labels']] <- get.epidata.value.labels(epidata)
-  y[['settings']] <- epidata.settings(epidata)
+  y[['Settings']] <- epidata.meta.data(epidata, "Settings")
+  y[['ProjectSettings']] <- epidata.meta.data(epidata, "ProjectSettings")
+  y[['Admin']] <- epidata.meta.data(epidata, "Admin")
+  y[['Study']] <- epidata.meta.data(epidata, "Study")
+
   if (use.epidata.labels) {
     status.log("Use epidata labels")
     y <- use.epidata.labels(y, set.missing.na)
@@ -189,19 +194,26 @@ read.epidata.xml <- function(x,
 }
 
 
-epidata.settings <- function(x) {
+
+epidata.meta.data <- function(x, tag) {
   ## Purpose: Get the epidata settings information
   ## ----------------------------------------------------------------------
   ## Arguments: x: an xmlRoot()
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 12 Jun 2011, 18:27
   y <- list()
-  settings <- xmlElementsByTagName(x, "Settings", rec = TRUE)[['Settings']]
-  for (i in 1:xmlSize(settings)) {
-    y[xmlName(xmlChildren(settings)[[i]])] <- xmlValue(xmlChildren(settings)[[i]])
+  these.data <- xmlElementsByTagName(x, tag, rec = TRUE)[[tag]]
+  for (i in 1:xmlSize(these.data)) {
+    dd <- xmlValue(xmlChildren(these.data)[[i]])
+    if (length(dd) == 0) dd <- ""
+    y[xmlName(xmlChildren(these.data)[[i]])] <- dd
   }
   y
 }
+
+
+
+
 
 
 fld.info <- function(x) {
