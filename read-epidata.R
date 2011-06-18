@@ -81,7 +81,7 @@ epidata.records <- function(datfile, flds) {
 
 
 
-convert.type <- function(x, fld.type) {
+convert.type <- function(x, fld.type, Settings) {
   ## Purpose:
   ## ----------------------------------------------------------------------
   ## Arguments:
@@ -98,16 +98,20 @@ convert.type <- function(x, fld.type) {
     x <- as.numeric(as.character(x))
   } else if (fld.type %in% c(4, 7) ){
     ## 16/05/1968 (DD/MM/YYYY, i.e. 16th of May, 1968)
-    x <- as.Date(x, "%d/%m/%Y")
+    dateFormat <- paste("%d", "%m", "%Y", sep = Settings$DateSeparator)
+    x <- as.Date(x, dateFormat)
   } else if (fld.type %in% c(5, 8) ){
     ## 16/05/1968 (MM/DD/YYYY, i.e. May 16th, 1968)
-    x <- as.Date(x, "%m/%d/%Y")
+    dateFormat <- paste("%m", "%d", "%Y", sep = Settings$DateSeparator)
+    x <- as.Date(x, dateFormat)
   } else if (fld.type %in% c(6, 9) ){
     ## 16/05/1968 (YYYY/MM/DD, i.e. 1968, May 16th)
-    x <- as.Date(x, "%Y/%m/%d")
+    dateFormat <- paste("%Y", "%m", "%d", sep = Settings$DateSeparator)
+    x <- as.Date(x, dateFormat)
   } else if (fld.type %in% c(10, 11) ){
     ## Time fields. At the moment it sets the date part to the current date.
-    x <- as.POSIXct(strptime(x, "%H.%M.%S"))
+    timeFormat <- paste("%H", "%M", "%S", sep = Settings$TimeSeparator)
+    x <- as.POSIXct(strptime(x, timeFormat))
   } else if (fld.type == 0){
     ## Logical - empty to NA, Y to TRUE, else to FALSE
     x[x == ""] <- NA
@@ -120,7 +124,7 @@ convert.type <- function(x, fld.type) {
 
 
 ### Field/structure info
-epidata.apply.field.structure <- function(sections, dat) {
+epidata.apply.field.structure <- function(sections, dat, Settings) {
   ## Purpose:
   ## ----------------------------------------------------------------------
   ## Arguments:
@@ -142,7 +146,7 @@ epidata.apply.field.structure <- function(sections, dat) {
       
       fld <- which(names(dat) == fld.id)
       names(dat)[fld] <- fld.name
-      dat[, fld] <- convert.type(dat[, fld], fld.type)
+      dat[, fld] <- convert.type(dat[, fld], fld.type, Settings)
     }
   }
   dat
@@ -167,6 +171,7 @@ read.epidata.xml <- function(x,
   x.fld.info <- fld.info(epidata)
   
   y <- list()
+  y[['Settings']] <- epidata.meta.data(epidata, "Settings")
   ## Get the data files
   num.datafiles <- xmlSize(xmlChildren(epidata)["DataFiles"])
   for (i in 1:num.datafiles) {
@@ -177,14 +182,13 @@ read.epidata.xml <- function(x,
     status.log("Get the records")
     dat1 <- epidata.records(datfile, x.fld.info$id)
     status.log("Apply field structure")
-    dat1 <- epidata.apply.field.structure(sections, dat1)
+    dat1 <- epidata.apply.field.structure(sections, dat1, y$Settings)
     y$data[i] <- list(dat1)
     names(y$data)[i] <- datfile.name
   }
   
   y[['field.info']] <- x.fld.info
-  y[['labels']] <- get.epidata.value.labels(epidata)
-  y[['Settings']] <- epidata.meta.data(epidata, "Settings")
+  y[['labels']] <- get.epidata.value.labels(epidata, y$Settings)
   y[['ProjectSettings']] <- epidata.meta.data(epidata, "ProjectSettings")
   y[['Admin']] <- epidata.meta.data(epidata, "Admin")
   y[['Study']] <- epidata.meta.data(epidata, "Study")
@@ -255,7 +259,7 @@ fld.info <- function(x) {
 
 
 
-get.epidata.value.labels <- function(x) {
+get.epidata.value.labels <- function(x, Settings) {
   ## Purpose: Create a list of epidata labels
   ## ----------------------------------------------------------------------
   ## Arguments: x: an xmlRoot
@@ -289,7 +293,7 @@ get.epidata.value.labels <- function(x) {
       this.label <- c(this.label, xmlValue(this.valueset[["Internal"]][[j]][["Label"]]))
     }
     ## Convert the value to the right data type
-    this.value <- convert.type(factor(this.value), valueset.type)
+    this.value <- convert.type(factor(this.value), valueset.type, Settings)
     these.labels <- data.frame(value = this.value, order = this.order, label = this.label, missing = this.missing)
     these.labels <- list(name = valueset.name,
                          type = valueset.type,
