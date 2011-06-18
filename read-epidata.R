@@ -108,6 +108,10 @@ convert.type <- function(x, fld.type) {
   } else if (fld.type %in% c(10, 11) ){
     ## Time fields. At the moment it sets the date part to the current date.
     x <- as.POSIXct(strptime(x, "%H.%M.%S"))
+  } else if (fld.type == 0){
+    ## Logical - empty to NA, Y to TRUE, else to FALSE
+    x[x == ""] <- NA
+    x <- x == "Y"
   } else {
     status.log(paste("Field type not handled:", fld.type))
   }
@@ -259,6 +263,7 @@ get.epidata.value.labels <- function(x) {
   ## Author: David Whiting, Date: 14 Jun 2011, 20:26
   ## ----------------------------------------------------------------------
   y <- xmlElementsByTagName(x, "ValueLabelSet", rec = TRUE)
+  if (xmlSize(y) == 0) return(NULL)
   i <- 1
   value.labels <- list()
   for (i in 1:xmlSize(y)) {
