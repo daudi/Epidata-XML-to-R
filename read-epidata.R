@@ -158,15 +158,32 @@ epidata.apply.field.structure <- function(sections, dat, Settings) {
 
 read.epidata.xml <- function(x, 
                              use.epidata.labels = TRUE,
-                             set.missing.na = TRUE) {
+                             set.missing.na = TRUE,
+                             random.pc = NULL) {
   ## Purpose:
   ## ----------------------------------------------------------------------
   ## Arguments:
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 12 Jun 2011, 18:27
   require(XML)
+  t1 <- Sys.time()
   status.log(paste("Parsing", x))
-  x <- xmlTreeParse(x)
+  if (!is.null(random.pc)) {
+    ## Take a random sample of records.
+    status.log(paste(">>> Taking a", random.pc, "% random sample of records."))
+    x <- xmlTreeParse(x, handlers = list(Record =
+                           function (x, pc = random.pc, ...) {
+                             retval <- NULL
+                             randval <- runif(1)
+                             limit <- pc / 100
+                             if (randval < limit) retval <- x
+                             retval
+                           }
+                           ), asTree = TRUE)
+  } else {
+    ## Take all the records.
+    x <- xmlTreeParse(x)
+  }
   epidata <- xmlRoot(x)
   x.fld.info <- fld.info(epidata)
   
@@ -197,7 +214,8 @@ read.epidata.xml <- function(x,
     status.log("Use epidata labels")
     y <- use.epidata.labels(y, set.missing.na)
   }
-  status.log("Finished.")
+  duration <- round(as.numeric(difftime(Sys.time(), t1), units = "secs"), 1)
+  status.log(paste("Finished in", duration, "seconds."))
   y
 }
 

@@ -30,3 +30,9 @@ x <- read.epidata.xml("sample.epx", set.missing.na = FALSE)
 x <- read.epidata.xml("sample.epx", use.epidata.labels = FALSE)
 ## Now use the epidata labels for just one field
 x$data$datafile_id_0$VL1 <- epidata.value.label(x$data$datafile_id_0$VL1, x$labels, "valuelabelset_id_0")
+
+
+## Example 5: Read in an epidata file, taking a 30% random sample of
+## the records.
+x <- read.epidata.xml("sample.epx", random.pc = 30)
+
