@@ -349,7 +349,7 @@ epidata.value.label <- function(x, value.labels, label.set) {
       this.val <- NA
     } else {
       i <- as.character(value.labels[[label.set]]$labels$value) == as.character(x[j])
-      if (i) {
+      if (any(i)) {
         this.val <- as.character(value.labels[[label.set]]$labels$label[i])
       } else {
         missing.levels <- unique(c(missing.levels, as.character(x[j])))
