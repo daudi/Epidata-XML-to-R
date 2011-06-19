@@ -320,7 +320,7 @@ is.epidata.na <- function(x, value.labels, label.set) {
     if (is.na(x[j])) {
       this.val <- NA
     } else {
-      i <- value.labels[[label.set]]$labels$value == x[j]
+      i <- as.character(value.labels[[label.set]]$labels$value) == as.character(x[j])
       this.val <- value.labels[[label.set]]$labels$missing[i]
     }
     retval <- c(retval, this.val)
@@ -341,16 +341,26 @@ epidata.value.label <- function(x, value.labels, label.set) {
   ## Returns: a factor vector of value labels for a given values
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 14 Jun 2011, 20:26
+
   retval <- NULL
-  ##  x <- as.character(x)
+  missing.levels <- NULL
   for (j in 1:length(x)) {
     if (is.na(x[j])) {
       this.val <- NA
     } else {
-      i <- value.labels[[label.set]]$labels$value == x[j]
-      this.val <- as.character(value.labels[[label.set]]$labels$label[i])
+      i <- as.character(value.labels[[label.set]]$labels$value) == as.character(x[j])
+      if (i) {
+        this.val <- as.character(value.labels[[label.set]]$labels$label[i])
+      } else {
+        missing.levels <- unique(c(missing.levels, as.character(x[j])))
+        this.val <- as.character(x[j])
+      }
     }
     retval <- c(retval, this.val)
+  }
+  if (!is.null(missing.levels)) {
+    missing.levels <- paste(missing.levels, collapse = ", ")
+    status.log(paste("Levels missing in label set ",  label.set, ": ", missing.levels, sep = ""))
   }
   as.factor(retval)
 }
@@ -374,7 +384,6 @@ use.epidata.labels <- function(x, set.missing.na = TRUE) {
       dd <- x$data[[1]][, j]
       ## Mark the missing values first
       if (set.missing.na) dd[is.epidata.na(dd, x$labels, this.labelset)] <- NA
-
       ## Relabel the values.
       dd <- epidata.value.label(dd, x$labels, this.labelset)
       x$data[[1]][, j] <- dd
