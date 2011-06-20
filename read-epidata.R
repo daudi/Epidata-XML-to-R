@@ -159,7 +159,8 @@ epidata.apply.field.structure <- function(sections, dat, Settings) {
 read.epidata.xml <- function(x, 
                              use.epidata.labels = TRUE,
                              set.missing.na = TRUE,
-                             random.pc = NULL) {
+                             random.pc = NULL,
+                             num.recs = NULL) {
   ## Purpose:
   ## ----------------------------------------------------------------------
   ## Arguments:
@@ -180,6 +181,20 @@ read.epidata.xml <- function(x,
                              retval
                            }
                            ), asTree = TRUE)
+  } else if (!is.null(num.recs)) {
+    ## I've got no idea how this closure thing works, but it
+    ## does. Something to read up about.
+    x <- xmlTreeParse(x, handlers = (function () {
+      cnt <- 0
+      list(Record =
+           function (x, num = num.recs, ...) {
+             retval <- NULL
+             cnt <<- cnt + 1
+             if (cnt <= num) retval <- x
+             retval
+           }
+           )
+    })(), asTree = TRUE)
   } else {
     ## Take all the records.
     x <- xmlTreeParse(x)
