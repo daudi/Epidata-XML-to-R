@@ -154,6 +154,27 @@ epidata.apply.field.structure <- function(sections, dat, Settings) {
 
 
 
+number.of.records <- function (num.recs) {
+  ## Purpose: Filter records as they are parsed.
+  ## ----------------------------------------------------------------------
+  ## Arguments: x: I'm not really sure if this is used.
+  ## num.recs: the number of records that we want
+  ## ----------------------------------------------------------------------
+  ## Details: I'm still trying to get my head around handlers. I am
+  ## hoping that by breaking them out like this I will begin to
+  ## understand them better. 
+  ## ----------------------------------------------------------------------
+  cnt <- 0
+  list(Record =
+       function (x, num = num.recs, ...) {
+         retval <- NULL
+         cnt <<- cnt + 1
+         if (cnt <= num) retval <- x
+         retval
+       })
+}
+
+
 
 
 read.epidata.xml <- function(x, 
@@ -182,19 +203,8 @@ read.epidata.xml <- function(x,
                            }
                            ), asTree = TRUE)
   } else if (!is.null(num.recs)) {
-    ## I've got no idea how this closure thing works, but it
-    ## does. Something to read up about.
-    x <- xmlTreeParse(x, handlers = (function () {
-      cnt <- 0
-      list(Record =
-           function (x, num = num.recs, ...) {
-             retval <- NULL
-             cnt <<- cnt + 1
-             if (cnt <= num) retval <- x
-             retval
-           }
-           )
-    })(), asTree = TRUE)
+    ## Take a specified number of records from the beginning of the record set.
+    x <- xmlTreeParse(x, handlers = number.of.records(num.recs), asTree = TRUE)
   } else {
     ## Take all the records.
     x <- xmlTreeParse(x)
