@@ -198,10 +198,12 @@ read.epidata.xml <- function(x,
     
     status.log("Get the records")
     dat1 <- epidata.records(datfile, x.fld.info$id)
-    status.log("Apply field structure")
-    dat1 <- epidata.apply.field.structure(sections, dat1, y$Settings)
-    y$data[i] <- list(dat1)
-    names(y$data)[i] <- datfile.name
+    if (nrow(dat1) > 0) {
+      status.log("Apply field structure")
+      dat1 <- epidata.apply.field.structure(sections, dat1, y$Settings)
+      y$data[i] <- list(dat1)
+      names(y$data)[i] <- datfile.name
+    }
   }
   
   y[['field.info']] <- x.fld.info
@@ -210,7 +212,7 @@ read.epidata.xml <- function(x,
   y[['Admin']] <- epidata.meta.data(epidata, "Admin")
   y[['Study']] <- epidata.meta.data(epidata, "Study")
 
-  if (use.epidata.labels) {
+  if (use.epidata.labels & "data" %in% names(y)) {
     status.log("Use epidata labels")
     y <- use.epidata.labels(y, set.missing.na)
   }
