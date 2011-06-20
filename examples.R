@@ -41,3 +41,6 @@ x <- read.epidata.xml("sample.epx", random.pc = 30)
 ## read in any records (take 0% of the records).
 x <- read.epidata.xml("sample.epx", random.pc = 0)
 
+
+## Example 7: Read in an epidata file, taking the first 4 records.
+x <- read.epidata.xml("sample.epx", num.recs = 4)
