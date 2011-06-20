@@ -36,3 +36,8 @@ x$data$datafile_id_0$VL1 <- epidata.value.label(x$data$datafile_id_0$VL1, x$labe
 ## the records.
 x <- read.epidata.xml("sample.epx", random.pc = 30)
 
+
+## Example 6: Read in the metadata from an epidata file, but do not
+## read in any records (take 0% of the records).
+x <- read.epidata.xml("sample.epx", random.pc = 0)
+
