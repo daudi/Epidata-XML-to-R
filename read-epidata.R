@@ -190,6 +190,8 @@ read.epidata.xml <- function(x,
   require(XML)
   t1 <- Sys.time()
   status.log(paste("Parsing", x))
+  y <- list()
+  y[['filename']] <- x
   if (!is.null(random.pc)) {
     ## Take a random sample of records.
     status.log(paste(">>> Taking a", random.pc, "% random sample of records."))
@@ -212,7 +214,6 @@ read.epidata.xml <- function(x,
   epidata <- xmlRoot(x)
   x.fld.info <- fld.info(epidata)
   
-  y <- list()
   y[['Settings']] <- epidata.meta.data(epidata, "Settings")
   ## Get the data files
   num.datafiles <- xmlSize(xmlChildren(epidata)["DataFiles"])
