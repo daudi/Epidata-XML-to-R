@@ -20,9 +20,11 @@
 ## PLEASE NOTE THAT I AM STILL EXPERIMENTING WITH THIS AND IT MIGHT
 ## NOT ALWAYS WORK.
 
+## Version 1.0 by Jamie Hockin August 2012
+## Changes address the epidata xml structure v1.0
+## Future:  can we manage encrypted data?
 
 unlink("STATUS.LOG")
-
 
 
 status.log <- function(x) {
@@ -44,7 +46,23 @@ extract.epidata.records <- function(rec, fields) {
   ## fields: a vector of field names (probably from the info table)
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 12 Jun 2011, 19:59
-  dd <- xmlAttrs(rec)
+  
+  ## Changes: fields are now named in data records
+  ##					xml treats whole record as a string
+  ##					with separators = and , (\, is a string comma)
+  ##          Do we need to handle &quot;?
+  
+  rstatus <- sub("^rs","",xmlAttrs(rec)[["status"]])
+  ## special handling for escaped comma (\,) character in records
+  d <- gsub("\\,","&comma;",xmlValue(rec),fixed=TRUE)
+  d <- strsplit(strsplit(d,",",fixed=TRUE)[[1]],"=",fixed=TRUE)
+  nams<-unlist(lapply(d,"[",1))
+  ## revert any escaped commas to simple text
+  vals<-gsub("&comma;",",",unlist(lapply(d,"[",2)),fixed=TRUE)
+  dd<-list()
+  dd[nams]<-vals
+  ## add record status field
+  dd["rec.status"]<-rstatus
   names.of.missing.fields <- fields[!fields %in% names(dd)]
   if (length(names.of.missing.fields)) {
     num.missing.flds <- length(names.of.missing.fields)
@@ -69,12 +87,9 @@ epidata.records <- function(datfile, flds) {
   ## 
   epi.records <- xmlChildren(datfile)[["Records"]]
   num.recs <- xmlSize(epi.records)
-  status.log(paste("Found", num.recs, "records"))
-  status.log("get the xmlAttrs")
   recs <- xmlApply(epi.records, extract.epidata.records, flds)
-  status.log("rbind the records")
   recs <- as.data.frame(do.call(rbind, recs))
-  status.log(paste("Extracted", nrow(recs), "records"))
+  status.log(paste("Extracted", nrow(recs), "record(s)"))
   rownames(recs) <- NULL
   recs
 }
@@ -89,32 +104,37 @@ convert.type <- function(x, fld.type, Settings) {
   ## Settings: settings information, as returned by epidata.meta.data()
   ## ----------------------------------------------------------------------
   ##
-  if (fld.type %in% c(1, 2)) {
+  
+  ## Changes: field types now have text types
+  
+  if (fld.type %in% c("ftInteger","ftAutoInc")) {
     x <- as.numeric(as.character(x))
-  } else if (fld.type %in% c(12, 13)){
+  } else if (fld.type %in% c("ftUpperString","ftString")){
+  	x <- as.character(x)
     ## Characters, do nothing
-  } else if (fld.type == 3){
+  } else if (fld.type == "ftFloat"){
     ## Decimal separator hack. It should convert to whatever R is using.
     levels(x) <- gsub("[,.]", Sys.localeconv()[['decimal_point']], levels(x))
     x <- as.numeric(as.character(x))
-  } else if (fld.type %in% c(4, 7) ){
+  } else if (fld.type %in% c("ftDMYDate","ftDMYAuto") ){
     ## 16/05/1968 (DD/MM/YYYY, i.e. 16th of May, 1968)
     dateFormat <- paste("%d", "%m", "%Y", sep = Settings$DateSeparator)
     x <- as.Date(x, dateFormat)
-  } else if (fld.type %in% c(5, 8) ){
+  } else if (fld.type %in% c("ftMDYDate","ftMDYAuto") ){
     ## 16/05/1968 (MM/DD/YYYY, i.e. May 16th, 1968)
     dateFormat <- paste("%m", "%d", "%Y", sep = Settings$DateSeparator)
     x <- as.Date(x, dateFormat)
-  } else if (fld.type %in% c(6, 9) ){
+  } else if (fld.type %in% c("ftYMDDate","ftYMDAuto") ){
     ## 16/05/1968 (YYYY/MM/DD, i.e. 1968, May 16th)
     dateFormat <- paste("%Y", "%m", "%d", sep = Settings$DateSeparator)
     x <- as.Date(x, dateFormat)
-  } else if (fld.type %in% c(10, 11) ){
+  } else if (fld.type %in% c("ftTime","ftTimeAuto") ){
     ## Time fields. At the moment it sets the date part to the current date.
     timeFormat <- paste("%H", "%M", "%S", sep = Settings$TimeSeparator)
     x <- as.POSIXct(strptime(x, timeFormat))
-  } else if (fld.type == 0){
+  } else if (fld.type == "ftBoolean"){
     ## Logical - empty to NA, Y to TRUE, else to FALSE
+    x <- as.character(x)
     x[x == ""] <- NA
     x <- x == "Y"
   } else {
@@ -134,18 +154,25 @@ epidata.apply.field.structure <- function(sections, dat, Settings) {
   ## Settings: settings information, as returned by epidata.meta.data()
   ## ----------------------------------------------------------------------
   ## 
+  
+  ## Changes: more field info now stored as attributes
+  ##					field name as id
+  ##					field type as type, length, decimals
+  ##					field id does not exist so use lower case field name
+  
   num.sections <- xmlSize(xmlChildren(sections))
   
   for (si in 1:num.sections) {
     fields <- xmlChildren(xmlChildren(sections)[[si]])[["Fields"]]
     num.flds <- xmlSize(fields)
-    
+    status.log(paste("Section",si,"has",num.flds,"fields"))   
     for (i in 1:num.flds) {
       field <- xmlChildren(fields)[[i]]
-      fld.id <- xmlAttrs(field)
-      fld.name <- xmlValue(xmlChildren(field)[["Name"]])
-      fld.type <- xmlValue(xmlChildren(field)[["Type"]])
-      
+ 			fld.attrs <- xmlAttrs(field)
+ 			fld.id <- fld.attrs[["id"]]
+ 			fld.name <- tolower(fld.id)
+ 			fld.type <- fld.attrs[["type"]]
+    
       fld <- which(names(dat) == fld.id)
       names(dat)[fld] <- fld.name
       dat[, fld] <- convert.type(dat[, fld], fld.type, Settings)
@@ -202,9 +229,12 @@ read.epidata.xml <- function(x,
   ## num.recs are specified only random.pc will be used.
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 12 Jun 2011, 18:27
+  
+  ## Changes: meta data has changed
+  
   require(XML)
   t1 <- Sys.time()
-  status.log(paste("Parsing", x))
+  status.log(paste("Reading", x))
   y <- list()
   y[['filename']] <- x
   if (!is.null(random.pc)) {
@@ -228,30 +258,29 @@ read.epidata.xml <- function(x,
   }
   epidata <- xmlRoot(x)
   x.fld.info <- fld.info(epidata)
-  
+ 
   y[['Settings']] <- epidata.meta.data(epidata, "Settings")
+
   ## Get the data files
-  num.datafiles <- xmlSize(xmlChildren(epidata)["DataFiles"])
+  num.datafiles <- xmlSize(xmlChildren(epidata)[["DataFiles"]])
+  status.log(paste("Found",num.datafiles,"data file(s)"))
   for (i in 1:num.datafiles) {
     datfile <- xmlChildren(xmlChildren(epidata)[["DataFiles"]])[[i]]
     datfile.name <- xmlAttrs(datfile)[["id"]]
     sections <- xmlChildren(datfile)[["Sections"]]
     
-    status.log("Get the records")
     dat1 <- epidata.records(datfile, x.fld.info$id)
+
     if (nrow(dat1) > 0) {
-      status.log("Apply field structure")
       dat1 <- epidata.apply.field.structure(sections, dat1, y$Settings)
       y$data[i] <- list(dat1)
       names(y$data)[i] <- datfile.name
     }
   }
-  
+
   y[['field.info']] <- x.fld.info
   y[['labels']] <- get.epidata.value.labels(epidata, y$Settings)
-  y[['ProjectSettings']] <- epidata.meta.data(epidata, "ProjectSettings")
-  y[['Admin']] <- epidata.meta.data(epidata, "Admin")
-  y[['Study']] <- epidata.meta.data(epidata, "Study")
+  y[['Study']] <- epidata.meta.data(epidata, "StudyInfo")
 
   if (use.epidata.labels & "data" %in% names(y)) {
     status.log("Use epidata labels")
@@ -270,12 +299,24 @@ epidata.meta.data <- function(x, tag) {
   ## Arguments: x: an xmlRoot()
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 12 Jun 2011, 18:27
+  
+  ## Changes: useful settings are now attributes of Settings tag
+  
   y <- list()
   these.data <- xmlElementsByTagName(x, tag, rec = TRUE)[[tag]]
-  for (i in 1:xmlSize(these.data)) {
-    dd <- xmlValue(xmlChildren(these.data)[[i]])
-    if (length(dd) == 0) dd <- ""
-    y[xmlName(xmlChildren(these.data)[[i]])] <- dd
+  if (tag=="Settings") {
+  	for (i in 1:xmlSize(these.data)) {
+  		y["dateSeparator"] <- xmlAttrs(these.data)[["dateSeparator"]]
+  		y["timeSeparator"] <- xmlAttrs(these.data)[["timeSeparator"]]
+  		y["decimalSeparator"] <- xmlAttrs(these.data)[["decimalSeparator"]]
+  	}
+  }
+  else {
+		for (i in 1:xmlSize(these.data)) {
+			dd <- xmlValue(xmlChildren(these.data)[[i]])
+			if (length(dd) == 0) dd <- ""
+			y[xmlName(xmlChildren(these.data)[[i]])] <- dd
+		}
   }
   y
 }
@@ -291,7 +332,11 @@ fld.info <- function(x) {
   ## Arguments: x: an xmlRoot() 
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 12 Jun 2011, 18:26
+  
+  ## Changes: field parameters are now presented as attributes
+ 
   y <- xmlElementsByTagName(x, "Field", rec = TRUE)
+
   fld.id <- NULL
   fld.name <- NULL
   fld.type <- NULL
@@ -300,19 +345,20 @@ fld.info <- function(x) {
   fld.question <- NULL
   fld.valuelabel <- NULL
   for (i in 1:xmlSize(y)) {
-    fld.id <- c(fld.id, xmlAttrs(y[[i]])[["id"]])
-    fld.name <- c(fld.name, xmlValue(xmlChildren(y[[i]])[["Name"]]))
-    fld.type <- c(fld.type, xmlValue(xmlChildren(y[[i]])[["Type"]]))
-    fld.length <- c(fld.length, xmlValue(xmlChildren(y[[i]])[["Length"]]))
-    fld.decimals <- c(fld.decimals, xmlValue(xmlChildren(y[[i]])[["Decimals"]]))
+  	fld.attr <- xmlAttrs(y[[i]])
+    fld.id <- c(fld.id, fld.attr[["id"]])
+    fld.name <- c(fld.name, tolower(fld.attr[["id"]]))
+    fld.type <- c(fld.type, fld.attr[["type"]])
+    fld.length <- c(fld.length, fld.attr[["length"]])
+    fld.decimals <- c(fld.decimals, fld.attr[["decimals"]])
     fld.question <- c(fld.question, xmlValue(xmlChildren(y[[i]])[["Question"]]))
-    fld.valuelabel <- c(fld.valuelabel, xmlValue(xmlChildren(y[[i]])[["ValueLabelId"]]))
+    fld.valuelabel <- c(fld.valuelabel, fld.attr["valueLabelRef"][[1]]) ## optional
   }
   data.frame(id = fld.id,
              name = fld.name,
              type = fld.type,
              length = fld.length,
-             decimals = fld.decimals,
+             decimals = fld.decimals, 
              question = fld.question,
              value.labelset = fld.valuelabel)
 }
@@ -327,6 +373,9 @@ get.epidata.value.labels <- function(x, Settings) {
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 14 Jun 2011, 20:26
   ## ----------------------------------------------------------------------
+  
+  ## Changes: new label structure
+  
   y <- xmlElementsByTagName(x, "ValueLabelSet", rec = TRUE)
   if (xmlSize(y) == 0) return(NULL)
   i <- 1
@@ -334,8 +383,7 @@ get.epidata.value.labels <- function(x, Settings) {
   for (i in 1:xmlSize(y)) {
     this.valueset <- y[[i]]
     valueset.id <- xmlAttrs(this.valueset)[["id"]]
-    valueset.name <- xmlValue(this.valueset[["Name"]])
-    valueset.type <- xmlValue(this.valueset[["Type"]])
+    valueset.type <- xmlAttrs(this.valueset)[["type"]]
     j <- 1
     this.value <- NULL
     this.order <- NULL
@@ -356,7 +404,7 @@ get.epidata.value.labels <- function(x, Settings) {
     ## Convert the value to the right data type
     this.value <- convert.type(factor(this.value), valueset.type, Settings)
     these.labels <- data.frame(value = this.value, order = this.order, label = this.label, missing = this.missing)
-    these.labels <- list(name = valueset.name,
+    these.labels <- list(name = valueset.id,
                          type = valueset.type,
                          labels = these.labels)
     value.labels[valueset.id] <- list(these.labels)
@@ -452,7 +500,6 @@ use.epidata.labels <- function(x, set.missing.na = TRUE) {
   }
   x
 }
-
 
 
 
