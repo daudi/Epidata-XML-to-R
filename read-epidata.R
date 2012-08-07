@@ -21,7 +21,6 @@
 ## NOT ALWAYS WORK.
 
 ## Version 1.0 by Jamie Hockin August 2012
-## Changes address the epidata xml structure v1.0
 ## Future:  can we manage encrypted data?
 
 unlink("STATUS.LOG")
@@ -50,19 +49,19 @@ extract.epidata.records <- function(rec, fields) {
   ## Changes: fields are now named in data records
   ##					xml treats whole record as a string
   ##					with separators = and , (\, is a string comma)
-  ##          Do we need to handle &quot;?
   
-  rstatus <- sub("^rs","",xmlAttrs(rec)[["status"]])
+  rstatus <- sub("^rs","",xmlGetAttr(rec,"status"))
   ## special handling for escaped comma (\,) character in records
   d <- gsub("\\,","&comma;",xmlValue(rec),fixed=TRUE)
-  d <- strsplit(strsplit(d,",",fixed=TRUE)[[1]],"=",fixed=TRUE)
-  nams<-unlist(lapply(d,"[",1))
+  ## split on commas and then on first = in each element of the list
+  ## outer split first subs the first = to a comma so split
+  d <- strsplit(sub("=","\\,",strsplit(d,",",fixed=TRUE)[[1]]),",",fixed=TRUE)
+  nams <- unlist(lapply(d,"[",1))
   ## revert any escaped commas to simple text
-  vals<-gsub("&comma;",",",unlist(lapply(d,"[",2)),fixed=TRUE)
-  dd<-list()
-  dd[nams]<-vals
-  ## add record status field
-  dd["rec.status"]<-rstatus
+  vals <- gsub("&comma;",",",unlist(lapply(d,"[",2)),fixed=TRUE)
+  dd <- list()
+  dd[nams] <- vals
+  dd["rec.status"] <- rstatus
   names.of.missing.fields <- fields[!fields %in% names(dd)]
   if (length(names.of.missing.fields)) {
     num.missing.flds <- length(names.of.missing.fields)
@@ -106,10 +105,9 @@ convert.type <- function(x, fld.type, Settings) {
   ##
   
   ## Changes: field types now have text types
-  
   if (fld.type %in% c("ftInteger","ftAutoInc")) {
     x <- as.numeric(as.character(x))
-  } else if (fld.type %in% c("ftUpperString","ftString")){
+  } else if (fld.type %in% c("ftUpperString","ftString","internal")){
   	x <- as.character(x)
     ## Characters, do nothing
   } else if (fld.type == "ftFloat"){
@@ -145,7 +143,7 @@ convert.type <- function(x, fld.type, Settings) {
 
 
 
-epidata.apply.field.structure <- function(sections, dat, Settings) {
+epidata.apply.field.structure <- function(sections, dat, Settings, keep.deleted) {
   ## Purpose: Apply the field definition information to each field
   ## ----------------------------------------------------------------------
   ## Arguments: sections: sections node from the XML file (these are
@@ -178,6 +176,12 @@ epidata.apply.field.structure <- function(sections, dat, Settings) {
       dat[, fld] <- convert.type(dat[, fld], fld.type, Settings)
     }
   }
+  ## pass record status through convert to ensure it returns as character data
+  fld <- which(names(dat) == "rec.status")
+  dat[, fld] <- convert.type(dat[, fld],"internal",Settings)
+  if (!keep.deleted) {
+  	dat <- dat[!dat[, fld]=="Deleted",]
+  }
   dat
 }
 
@@ -207,9 +211,10 @@ number.of.records <- function (num.recs) {
 
 
 
-read.epidata.xml <- function(x, 
+read.epidata.xml <- function(x,
                              use.epidata.labels = TRUE,
                              set.missing.na = TRUE,
+														 keep.deleted,
                              random.pc = NULL,
                              num.recs = NULL) {
   ## Purpose: Main user function to read in the XML file.
@@ -217,16 +222,18 @@ read.epidata.xml <- function(x,
   ## Arguments: x: the name of an XML file.
   ## use.epidata.labels: If FALSE do not use the epidata value labels.
   ## set.missing.na: if TRUE (the default) use the epidata definition
-  ## of missing values and set the value in R to NA. Epidata allows
-  ## for more than one definition of missing value, and all of these
-  ## will be mapped to NA.
+  ##  of missing values and set the value in R to NA. Epidata allows
+  ##  for more than one definition of missing value, and all of these
+  ##  will be mapped to NA.
+  ## keep.deleted: if any value is specified, deleted records will be kept;
+  ##  default is to drop deleted records
   ## random.pc: a number from 0 to 100 specifying the percentage of
-  ## records that should be imported. Records are selected
-  ## randomly. If the value is 0, no records will be imported, only
-  ## the metadata.
+  ##  records that should be imported. Records are selected
+  ##  randomly. If the value is 0, no records will be imported, only
+  ##  the metadata.
   ## num.recs: A number of records to import. Records are imported
-  ## sequentially until num.recs is reached. If both random.pc and
-  ## num.recs are specified only random.pc will be used.
+  ##  sequentially until num.recs is reached. If both random.pc and
+  ##  num.recs are specified only random.pc will be used.
   ## ----------------------------------------------------------------------
   ## Author: David Whiting, Date: 12 Jun 2011, 18:27
   
@@ -235,6 +242,12 @@ read.epidata.xml <- function(x,
   require(XML)
   t1 <- Sys.time()
   status.log(paste("Reading", x))
+  if (missing(keep.deleted)) {
+  	status.log("Deleted records will be dropped")
+  } else {
+  	status.log("Deleted records will be kept")
+  }
+
   y <- list()
   y[['filename']] <- x
   if (!is.null(random.pc)) {
@@ -272,10 +285,11 @@ read.epidata.xml <- function(x,
     dat1 <- epidata.records(datfile, x.fld.info$id)
 
     if (nrow(dat1) > 0) {
-      dat1 <- epidata.apply.field.structure(sections, dat1, y$Settings)
+      dat1 <- epidata.apply.field.structure(sections, dat1, y$Settings,!missing(keep.deleted))
+         	
       y$data[i] <- list(dat1)
       names(y$data)[i] <- datfile.name
-    }
+     }
   }
 
   y[['field.info']] <- x.fld.info
@@ -337,13 +351,14 @@ fld.info <- function(x) {
  
   y <- xmlElementsByTagName(x, "Field", rec = TRUE)
 
-  fld.id <- NULL
-  fld.name <- NULL
-  fld.type <- NULL
-  fld.length <- NULL
-  fld.decimals <- NULL
-  fld.question <- NULL
-  fld.valuelabel <- NULL
+  ## start with definition of record status
+  fld.id <- "rec.status"
+  fld.name <- "rec.status"
+  fld.type <- "internal"
+  fld.length <- NA
+  fld.decimals <- NA
+  fld.question <- "Deleted"
+  fld.valuelabel <- NA
   for (i in 1:xmlSize(y)) {
   	fld.attr <- xmlAttrs(y[[i]])
     fld.id <- c(fld.id, fld.attr[["id"]])
